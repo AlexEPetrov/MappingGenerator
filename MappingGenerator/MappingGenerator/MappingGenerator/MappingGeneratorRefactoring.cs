@@ -120,6 +120,20 @@ namespace MappingGenerator
 
             var mappingEngine = new MappingEngine(semanticModel, generator, methodSymbol.ContainingAssembly);
 
+            if (SymbolHelper.IsUpdateParameterFunctionWithReturn(methodSymbol))
+            {
+                var source = methodSymbol.Parameters[0];
+                var target = methodSymbol.Parameters[1];
+                var targets = ObjectHelper.GetFieldsThaCanBeSetPublicly(target.Type, methodSymbol.ContainingAssembly);
+                var sourceFinder = new ObjectMembersMappingSourceFinder(source.Type, generator.IdentifierName(source.Name), generator);
+                var returnSyntaxNode = generator.ReturnStatement(MappingEngine.CreateParameterExpression(target))
+                    .WithAdditionalAnnotations(Formatter.Annotation);
+                return
+                    mappingEngine.MapUsingSimpleAssignment(generator, targets, sourceFinder,
+                        globalTargetAccessor: generator.IdentifierName(target.Name)).Concat(
+                        Enumerable.Repeat(returnSyntaxNode, 1));
+            }
+
             if (SymbolHelper.IsPureMappingFunction(methodSymbol))
             {
                 var source = methodSymbol.Parameters[0];

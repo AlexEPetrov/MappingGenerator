@@ -311,6 +311,11 @@ namespace MappingGenerator
         {
             return (ExpressionSyntax) syntaxGenerator.DefaultExpression(typeSymbol);
         }
+
+        internal static SyntaxNode CreateParameterExpression(IParameterSymbol parameter)
+        {
+            return SyntaxFactory.IdentifierName(parameter.Name);
+        }
     }
 
     public class MappingPath

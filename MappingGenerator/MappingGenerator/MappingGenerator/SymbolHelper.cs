@@ -8,6 +8,14 @@ namespace MappingGenerator
 {
     internal static class SymbolHelper
     {
+        public static bool IsUpdateParameterFunctionWithReturn(IMethodSymbol methodSymbol)
+        {
+            if (IsConstructor(methodSymbol))
+            {
+                return false;
+            }
+            return methodSymbol.Parameters.Length == 2 && methodSymbol.ReturnType.Equals(methodSymbol.Parameters[1].Type);
+        }
         public static bool IsUpdateParameterFunction(IMethodSymbol methodSymbol)
         {
             if (IsConstructor(methodSymbol))
