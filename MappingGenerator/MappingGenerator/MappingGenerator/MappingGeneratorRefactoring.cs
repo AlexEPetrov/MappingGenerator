@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Formatting;
+using MappingGenerator.ExternalMapper;
 
 namespace MappingGenerator
 {
@@ -32,6 +33,24 @@ namespace MappingGenerator
         {
             switch (node)
             {
+                // ExternalMapper support: 
+                case ClassDeclarationSyntax classDeclaration:
+                {
+
+                    if (classDeclaration != null)
+                    {
+                        var mappingSource = classDeclaration.GetMappingSourceFromComment();
+                        if (!string.IsNullOrEmpty(mappingSource))
+                        {
+                            context.RegisterRefactoring(new ExternalMappingClassCodeAction(context.Document,
+                                classDeclaration, mappingSource));
+                            context.RegisterRefactoring(new MappingClassPropertiesCodeAction(context.Document,
+                                classDeclaration, mappingSource));
+
+                        }
+                    }
+                    break;
+                }
                 case MethodDeclarationSyntax methodDeclaration:
                     if (methodDeclaration.Parent.Kind() != SyntaxKind.InterfaceDeclaration && methodDeclaration.ParameterList.Parameters.Count > 0)
                     {
@@ -69,7 +88,7 @@ namespace MappingGenerator
             }
         }
 
-        private async Task<Document> GenerateMappingMethodBody(Document document,
+        public static async Task<Document> GenerateMappingMethodBody(Document document,
             BaseMethodDeclarationSyntax methodSyntax, CancellationToken cancellationToken)
         {
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
@@ -80,7 +99,7 @@ namespace MappingGenerator
             return await document.ReplaceNodes(methodSyntax, methodSyntax.WithOnlyBody(blockSyntax), cancellationToken);
         }
 
-        private StatementSyntax AsStatement(SyntaxNode node)
+        private static StatementSyntax AsStatement(SyntaxNode node)
         {
             if (node is ExpressionSyntax expression)
                 return SyntaxFactory.ExpressionStatement(expression);
